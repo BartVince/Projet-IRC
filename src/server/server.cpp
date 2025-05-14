@@ -7,7 +7,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <stdio.h>
 
-#include "rlImGui.h"
+// #include "rlImGui.h"
 #include "imgui.h"
 
 Server::Server() : Server(720, 480) {
@@ -114,14 +114,13 @@ void Server::Start(bool secureBoolean, const char* url) {
 
 	rlImGuiSetup(true);
     this->clientNickname = nick;
+
     Channel myChannel = CreateChannel("#Default");
     Channel myChannel1 = CreateChannel("#DefaultAlt");
     channels.push_back(myChannel);
     channels.push_back(myChannel1);
 
-    WriteFileMessage(channels.at(0), "Yooo");     // This won't work and I have no idea why
-    WriteFileMessage(channels.at(0), "Heyyy");    // This won't work and I have no idea why
-
+    WriteFileMessage(channels.at(0), "This is a test");
     serverSocket = ConnectIRC::CreateSocket();
     ConnectIRC::Connect(&serverSocket, secureBoolean, url, true);
 
@@ -159,8 +158,6 @@ void Server::Update() {
 }
 
 void Server::Draw() {
-    rlImGuiBegin();
-
     ImGui::SetWindowSize(ImVec2(m_Width, m_Height));
     ImGui::SetWindowPos(ImVec2(0, 0));
 
@@ -184,8 +181,6 @@ void Server::Draw() {
             ImGui::Text("No clients connected.");
         }
     }
-
-    rlImGuiEnd();
 }
 
 
