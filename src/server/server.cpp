@@ -10,6 +10,10 @@
 // #include "rlImGui.h"
 #include "imgui.h"
 
+Server::Server() : Server(720, 480) {
+
+}
+
 Server::Server(float w,float h) : m_Width(w), m_Height(h)  {
     WSAStartup(DllVersion, &wsaData);
 }
@@ -27,7 +31,7 @@ Channel CreateChannel(const char* newChannelName) {
 
     newChannel.FilePath = newChannel.ChannelName + ".txt";
 
-    newChannel.MessageHistory = fopen(newChannel.FilePath.c_str(), "w");
+    newChannel.MessageHistory = fopen(newChannel.FilePath.c_str(), "ab+");
     if (newChannel.MessageHistory == nullptr) {
         perror("Error creating file");
     }
@@ -40,7 +44,13 @@ Channel CreateChannel(const char* newChannelName) {
 
 void WriteFileMessage(Channel channel, char* message) {
     if (channel.MessageHistory != nullptr) {
-        fflush(channel.MessageHistory);
+        fwrite(message, sizeof(char), strlen(message), channel.MessageHistory);
+    }
+}
+
+void ReadFile(Channel channel) {
+    if (channel.MessageHistory != nullptr) {
+        
     }
 }
 
@@ -51,13 +61,14 @@ char* Server::ProcessMessage(char** parsedResponse) {
 
     if (strcmp(parsedResponse[0], "NICK") == 0) {
 
-        char* nick = parsedResponse[3];
+        char* nick = parsedResponse[1];
 
         strcpy(response, ":projectirc.example.com 001 ");    
         strcat(response, nick);  
         strcat(response, " :Welcome to the IRC Project\r\n");
       
-        clientNickname = nick;
+        // clientNickname = nick;
+        strcpy(clientNickname, nick);
     }
 
     if (strcmp(parsedResponse[0], "JOIN") == 0) {
@@ -69,8 +80,8 @@ char* Server::ProcessMessage(char** parsedResponse) {
         strcat(response, channel);
 
         for (int i = 0; i < channels.size(); i++){
-            if (channels[i].ChannelName == channel) {
-                channels[i].ClientNames.push_back(clientNickname);
+            if (channels.at(i).ChannelName == channel) {
+                channels.at(i).ClientNames.push_back(string(clientNickname));
             }
         }
     }
@@ -84,8 +95,8 @@ char* Server::ProcessMessage(char** parsedResponse) {
         strcat(response, channel);
 
         for (int i = 0; i < channels.size(); i++){
-            if (channels[i].ChannelName == channel) {
-                channels[i].ClientNames.erase(std::remove(channels[i].ClientNames.begin(), channels[i].ClientNames.end(), clientNickname), channels[i].ClientNames.end());
+            if (channels.at(i).ChannelName == channel) {
+                channels.at(i).ClientNames.erase(std::remove(channels[i].ClientNames.begin(), channels[i].ClientNames.end(), clientNickname), channels[i].ClientNames.end());
             }
         }
     }
@@ -96,16 +107,20 @@ char* Server::ProcessMessage(char** parsedResponse) {
 /* -------- ↓ ----------- ↓ -------- */
 /* -------- ↓ APP METHODS ↓ -------- */
 /* -------- ↓ ----------- ↓ -------- */
-
+char nick[256] = {0};
 void Server::Start(bool secureBoolean, const char* url) {
+
+    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
+
+	rlImGuiSetup(true);
+    this->clientNickname = nick;
+
     Channel myChannel = CreateChannel("#Default");
     Channel myChannel1 = CreateChannel("#DefaultAlt");
     channels.push_back(myChannel);
     channels.push_back(myChannel1);
 
-    //WriteFileMessage(channels.at(0), "Yooo");     // This won't work and I have no idea why
-    //WriteFileMessage(channels.at(0), "Heyyy");    // This won't work and I have no idea why
-    
+    WriteFileMessage(channels.at(0), "This is a test");
     serverSocket = ConnectIRC::CreateSocket();
     ConnectIRC::Connect(&serverSocket, secureBoolean, url, true);
 
@@ -149,15 +164,16 @@ void Server::Draw() {
     ImGui::Text("%s", "Existing Channels:");
 
     for (int i = 0; i < channels.size(); i++) {
+        Channel chan  = channels[i];
+        ImGui::BulletText("%s", chan.ChannelName.c_str());
 
-        ImGui::BulletText("%s", channels[i].ChannelName.c_str());
-
-        if (!channels[i].ClientNames.empty()) {
+        if (!chan.ClientNames.empty()) {
             ImGui::Indent();
             ImGui::Text("Connected Clients:");
 
-            for (int j = 0; j < channels[i].ClientNames.size(); j++) {
-                ImGui::BulletText("%s", channels[i].ClientNames[j].c_str());
+            for (int j = 0; j < chan.ClientNames.size(); j++) {
+                string whatever = chan.ClientNames[j];
+                ImGui::BulletText("%s", whatever.c_str());
             }
 
             ImGui::Unindent();
@@ -171,5 +187,9 @@ void Server::Draw() {
 
 
 void Server::End() {
+    for (int i = 0; i < channels.size(); i++) {
+        Channel chan  = channels[i];
+        fclose(chan.MessageHistory);
+    }
     ConnectIRC::Shutdown();
 }

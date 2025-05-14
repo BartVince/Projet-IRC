@@ -11,7 +11,7 @@ typedef struct Channel {
     string ChannelName;
     string FilePath;
     FILE* MessageHistory;
-    std::vector<string> ClientNames;
+    vector<string> ClientNames;
 };
 
 class Server : public IRC_Interface {
@@ -26,18 +26,18 @@ private:
 
     vector<Channel> channels;
 
-    char* ProcessMessage(char** parsedResponse);
-
+    
     float m_Width;
     float m_Height;
-
+    
 public:
     Server(float width,float height);
+    Server();
+
+    char* ProcessMessage(char** parsedResponse);
 
     void Start(bool secure, const char* url) override;
     void Update() override;
     void Draw() override;
     void End() override;
 };
-
-char* ProcessMessage(char** parsedResponse);

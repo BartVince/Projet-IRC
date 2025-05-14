@@ -3,6 +3,8 @@
 
 char* SimulateMessageToServer(char* message, char* delimiter) {
     
+    Server serv;
+
     char* messageCopy = strdup(message);
     char* parsedResponse[1024] = {0};
     char* token = strtok(messageCopy, delimiter);
@@ -20,7 +22,7 @@ char* SimulateMessageToServer(char* message, char* delimiter) {
 
     parsedResponse[i] = NULL;
 
-    char* result = ProcessMessage(parsedResponse);
+    char* result = serv.ProcessMessage(parsedResponse);
 
     return result;
 
