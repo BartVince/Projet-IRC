@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
-#include <iostream>
 
 using namespace std;
 
